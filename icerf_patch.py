@@ -8,12 +8,19 @@ def write(path, text):
     open(path, "w", encoding="utf-8").write(text)
 
 def edit(path, pairs):
-    s = open(path, encoding="utf-8").read()
+    try:
+        s = open(path, encoding="utf-8").read()
+    except OSError:
+        print("FAILED (missing file):", path)
+        return False
     for old, new in pairs:
         pattern = r"\s+".join(re.escape(t) for t in old.split())
-        assert len(re.findall(pattern, s)) == 1, "pattern not found in " + path + ": " + old[:60]
+        if len(re.findall(pattern, s)) != 1:
+            print("FAILED (pattern not found):", path, "::", " ".join(old.split()[:8]))
+            return False
         s = re.sub(pattern, lambda m: new.strip(), s, count=1)
     open(path, "w", encoding="utf-8").write(s)
+    return True
 
 write('Feather/Backend/Observable/AutoInstaller.swift', r'''//
 //  AutoInstaller.swift
@@ -74,25 +81,26 @@ final class AutoInstaller: ObservableObject {
 	}
 	
 	// MARK: Hooks
-	/// تُستدعى من DownloadManager بعد انتهاء التنزيل واستيراد الملف
-	func importFinished(downloadID: String, error: Error?) {
-		guard _pendingID == downloadID else { return }
+	private init() {
+		// عند حفظ التطبيق المستورد في قاعدة البيانات نبدأ التوقيع تلقائياً
+		NotificationCenter.default.addObserver(
+			forName: .NSManagedObjectContextDidSave,
+			object: nil,
+			queue: .main
+		) { [weak self] note in
+			self?._contextDidSave(note)
+		}
+	}
+	
+	private func _contextDidSave(_ note: Notification) {
+		guard stage == .downloading, _pendingID != nil else { return }
+		
+		guard
+			let inserted = note.userInfo?[NSInsertedObjectsKey] as? Set<NSManagedObject>,
+			let imported = inserted.compactMap({ $0 as? Imported }).first
+		else { return }
+		
 		_pendingID = nil
-		
-		if let error {
-			_fail(error.localizedDescription)
-			return
-		}
-		
-		let request: NSFetchRequest<Imported> = Imported.fetchRequest()
-		request.sortDescriptors = [NSSortDescriptor(keyPath: \Imported.date, ascending: false)]
-		request.fetchLimit = 1
-		
-		guard let imported = try? Storage.shared.context.fetch(request).first else {
-			_fail("تعذر العثور على الملف بعد التنزيل.")
-			return
-		}
-		
 		_sign(imported)
 	}
 	
@@ -712,20 +720,6 @@ struct FRIconView: View {
 }
 ''')
 
-edit('Feather/Backend/Observable/DownloadManager.swift', [
-(r'''			}
-			
-			DispatchQueue.main.async {
-				if let index = DownloadManager.shared.getDownloadIndex(by: dl.id) {
-''', r'''			}
-			
-			AutoInstaller.shared.importFinished(downloadID: dl.id, error: err)
-			
-			DispatchQueue.main.async {
-				if let index = DownloadManager.shared.getDownloadIndex(by: dl.id) {
-'''),
-])
-
 edit('Feather/FeatherApp.swift', [
 (r'''	
 	let heartbeat = HeartbeatManager.shared
@@ -1010,21 +1004,7 @@ edit('Feather/Views/Sources/SourcesView.swift', [
 '''),
 ])
 
-edit('Feather/Views/TabView/Bars/TabbarView.swift', [
-(r'''
-struct TabbarView: View {
-	@State private var selectedTab: TabEnum = .sources
-
-	var body: some View {
-''', r'''
-struct TabbarView: View {
-	@State private var selectedTab: TabEnum = .today
-
-	var body: some View {
-'''),
-])
-
-edit('Feather/Views/TabView/TabEnum.swift', [
+tab_ok = edit('Feather/Views/TabView/TabEnum.swift', [
 (r'''
 enum TabEnum: String, CaseIterable, Hashable {
 	case sources
@@ -1076,6 +1056,21 @@ enum TabEnum: String, CaseIterable, Hashable {
 			.today,
 			.sources,
 			.library,
+'''),
+])
+
+if tab_ok:
+    edit('Feather/Views/TabView/Bars/TabbarView.swift', [
+(r'''
+struct TabbarView: View {
+	@State private var selectedTab: TabEnum = .sources
+
+	var body: some View {
+''', r'''
+struct TabbarView: View {
+	@State private var selectedTab: TabEnum = .today
+
+	var body: some View {
 '''),
 ])
 
