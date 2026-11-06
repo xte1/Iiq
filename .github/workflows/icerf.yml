@@ -21,24 +21,26 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        submodules: recursive
+        submodules: false
         fetch-depth: 1
+
+    - name: Fetch exact dependencies
+      run: |
+        fetch_at() {
+          dir="$1"; url="$2"; sha="$3"
+          rm -rf "$dir"; mkdir "$dir"
+          (cd "$dir" && git init -q && git remote add origin "$url" \
+            && git fetch -q --depth 1 origin "$sha" && git checkout -q FETCH_HEAD)
+        }
+        fetch_at Zsign https://github.com/khcrysalis/Zsign-Package c4ba9da4283031c07efa03bce42c4b8602d22e73
+        fetch_at IDeviceKitten https://github.com/khcrysalis/IDeviceKit 837cf1e14d4875771dd5ee1b754a4c86215c5db3
+        ls Zsign | head -5
+        ls IDeviceKitten | head -5
 
     - name: Apply i Cerf patch
       run: |
         if [ -f icerf-patch.zip ]; then unzip -o icerf-patch.zip -x "Feather/*.swift"; fi
         python3 icerf_patch.py
-
-    - name: Ensure submodules
-      run: |
-        if [ ! -f Zsign/Package.swift ]; then
-          rm -rf Zsign
-          git clone --depth 1 -b package https://github.com/khcrysalis/Zsign-Package Zsign
-        fi
-        if [ -z "$(ls -A IDeviceKitten 2>/dev/null)" ]; then
-          rm -rf IDeviceKitten
-          git clone --depth 1 https://github.com/khcrysalis/IDeviceKit IDeviceKitten
-        fi
 
     - name: Select Xcode
       run: |
@@ -48,9 +50,10 @@ jobs:
           XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | head -1)
           if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
         fi
+        xcodebuild -version
 
     - name: Build
-      run: make iphoneos
+      run: make iphoneos || (sleep 5 && make iphoneos)
 
     - name: Repack IPA (plain zip)
       run: |
