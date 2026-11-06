@@ -15,6 +15,8 @@ struct FeatherApp: App {
 	@UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 	
 	let heartbeat = HeartbeatManager.shared
+	@State private var _showSplash = true
+	@StateObject private var _autoInstaller = AutoInstaller.shared
 	
 	@StateObject var downloadManager = DownloadManager.shared
 	let storage = Storage.shared
@@ -46,6 +48,38 @@ struct FeatherApp: App {
 				
 				UIApplication.topViewController()?.view.window?.tintColor = UIColor(Color(hex: UserDefaults.standard.string(forKey: "Feather.userTintColor") ?? "#848ef9"))
 			}
+			.overlay(alignment: .top) {
+				AutoInstallBanner()
+			}
+			.sheet(item: $_autoInstaller.installApp, onDismiss: {
+				AutoInstaller.shared.finish()
+			}) { app in
+				InstallPreviewView(app: app.base, isSharing: app.archive)
+					.presentationDetents([.height(200)])
+					.presentationDragIndicator(.visible)
+			}
+			.overlay {
+				if _showSplash {
+					SplashView()
+						.transition(.opacity)
+				}
+			}
+			.task {
+				try? await Task.sleep(nanoseconds: 2_000_000_000)
+				withAnimation(.easeOut(duration: 0.4)) {
+					_showSplash = false
+				}
+				FeatherApp.addDefaultSourceIfNeeded()
+			}
+		}
+	}
+	
+	/// السورس الافتراضي — يُضاف مرة واحدة عند أول تشغيل
+	static func addDefaultSourceIfNeeded() {
+		let key = "icerf.didAddDefaultSource"
+		guard !UserDefaults.standard.bool(forKey: key) else { return }
+		FR.handleSource("https://raw.githubusercontent.com/AbdTench/SwiftSource/refs/heads/main/My%20Source") {
+			UserDefaults.standard.set(true, forKey: key)
 		}
 	}
 	
@@ -156,6 +190,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		_ application: UIApplication,
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
 	) -> Bool {
+		UserDefaults.standard.register(defaults: ["Feather.serverMethod": 1])
 		_createPipeline()
 		_createDocumentsDirectories()
 		ResetView.clearWorkCache()
