@@ -34,16 +34,13 @@ struct SettingsView: View {
 	}
 
     
-	private let _donationsUrl = "https://github.com/sponsors/claration"
-	private let _githubUrl = "https://github.com/claration/Feather"
+	private let _siteUrl = "https://icerf.netlify.app"
+	private let _telegramUrl = "https://t.me/iCERF_iQ"
     
 	// MARK: Body
 	var body: some View {
 		NBNavigationView(.localized("Settings")) {
 			Form {
-				#if !NIGHTLY && !DEBUG
-					SettingsDonationCellView(site: _donationsUrl)
-				#endif
                 
 				_feedback()
                 
@@ -114,14 +111,14 @@ extension SettingsView {
 				}
 			}
             
-			Button(.localized("Submit Feedback"), systemImage: "safari") {
-				UIApplication.open(URL(string: "\(_githubUrl)/issues/new/choose")!)
+			Button("قناتنا على تيليجرام", systemImage: "paperplane") {
+				UIApplication.open(_telegramUrl)
 			}
-			Button(.localized("GitHub Repository"), systemImage: "safari") {
-				UIApplication.open(_githubUrl)
+			Button("الموقع الرسمي", systemImage: "safari") {
+				UIApplication.open(_siteUrl)
 			}
 		} footer: {
-			Text(.localized("If any issues occur within the app please report it via the GitHub repository. When submitting an issue, make sure to submit detailed information."))
+			Text("إذا واجهتك أي مشكلة في التطبيق تواصل معنا عبر قناتنا على تيليجرام.")
 		}
 	}
     
