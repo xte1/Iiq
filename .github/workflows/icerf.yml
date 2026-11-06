@@ -34,12 +34,23 @@ jobs:
           rm -rf IDeviceKitten
           git clone --depth 1 https://github.com/khcrysalis/IDeviceKit IDeviceKitten
         fi
+        echo "--- Zsign"; ls Zsign | head
+        echo "--- IDeviceKitten"; ls IDeviceKitten | head
 
-    - name: Select Xcode 26
+    - name: Select Xcode
       run: |
-        XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-        if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
+        if [ -d /Applications/Xcode_26.3.0.app ]; then
+          sudo xcode-select -s /Applications/Xcode_26.3.0.app
+        else
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | head -1)
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
+        fi
         xcodebuild -version
+        ls -d /Applications/Xcode*.app
+
+    - name: Resolve packages
+      run: |
+        xcodebuild -resolvePackageDependencies -project Feather.xcodeproj -scheme Feather 2>&1 | tail -40 || true
 
     - name: Build
       run: make iphoneos
