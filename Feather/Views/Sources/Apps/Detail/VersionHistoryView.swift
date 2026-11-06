@@ -31,10 +31,11 @@ struct VersionHistoryView: View {
 					.contextMenu {
 						if let downloadURL = version.downloadURL {
 							Button {
-								_ = DownloadManager.shared.startDownload(
+								AutoInstaller.shared.install(
 									from: downloadURL,
 									id: app.currentUniqueId,
-									sourceProvenance: SourceAppProvenance(
+									name: app.currentName,
+									provenance: SourceAppProvenance(
 										sourceURL: sourceURL,
 										repository: source,
 										app: app,
