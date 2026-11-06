@@ -43,14 +43,15 @@ struct DownloadButtonView: View {
 			} else {
 				Button {
 					if let url = app.currentDownloadUrl {
-						_ = downloadManager.startDownload(
+						AutoInstaller.shared.install(
 							from: url,
 							id: app.currentUniqueId,
-							sourceProvenance: _sourceProvenance()
+							name: app.currentName,
+							provenance: _sourceProvenance()
 						)
 					}
 				} label: {
-					Text(.localized("Get"))
+					Text("تنزيل")
 						.lineLimit(0)
 						.font(.headline.bold())
 						.foregroundStyle(Color.accentColor)
