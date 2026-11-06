@@ -1,41 +1,32 @@
 //
 //  AboutView.swift
-//  Feather
-//
-//  Created by samara on 30.04.2025.
+//  i Cerf
 //
 
 import SwiftUI
 import NimbleViews
-import NimbleJSON
-
-// MARK: - Extension: Model
-extension AboutView {
-	struct CreditsModel: Codable, Hashable {
-		let name: String?
-		let desc: String?
-		let github: String
-	}
-}
 
 // MARK: - View
 struct AboutView: View {
-	@State private var _credits: [CreditsModel] = [
-		.init(name: "C", desc: "Developer", github: "claration"),
-		.init(name: "Asami", desc: "Developer", github: "Nyasami"),
-		.init(name: "Lakhan Lothiyi", desc: "AltStore Repositories", github: "llsc12"),
+	private let _contacts: [(title: String, handle: String, icon: String, url: String)] = [
+		("Instagram", "eng_azawy", "camera.circle.fill", "https://instagram.com/eng_azawy"),
+		("Telegram", "bavarite", "paperplane.circle.fill", "https://t.me/bavarite"),
+		("قناتنا على تيليجرام", "iCERF_iQ", "megaphone.fill", "https://t.me/iCERF_iQ"),
+		("TikTok", "eyesiq", "music.note", "https://www.tiktok.com/@eyesiq"),
+		("الموقع", "icerf.netlify.app", "globe", "https://icerf.netlify.app")
 	]
-	
-	let pngURL = URL(string: "https://sponsors.claration.dev/sponsors.png")!
 	
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("About")) {
 			Section {
 				VStack {
-					FRAppIconView(size: 72)
+					Image("Glyph")
+						.resizable()
+						.scaledToFit()
+						.frame(height: 110)
 					
-					Text(Bundle.main.exec)
+					Text("i Cerf")
 						.font(.largeTitle)
 						.bold()
 						.foregroundStyle(Color.accentColor)
@@ -51,68 +42,29 @@ struct AboutView: View {
 			.frame(maxWidth: .infinity)
 			.listRowBackground(EmptyView())
 			
-			NBSection(.localized("Credits")) {
-				ForEach(_credits, id: \.github) { credit in
-					_credit(name: credit.name, desc: credit.desc, github: credit.github)
-				}
-				.transition(.slide)
-			}
-			
-			NBSection(.localized("Sponsors")) {
-				Text(.localized("💜 This couldn't of been done without my sponsors!"))
-					.foregroundStyle(.secondary)
-					.padding(.vertical, 2)
-				AsyncImage(url: pngURL) { phase in
-					switch phase {
-					case .empty:
-						ProgressView()
-							.frame(maxWidth: .infinity)
-							.frame(height: 120)
-					case .success(let image):
-						image
-							.resizable()
-							.scaledToFit()
-							.frame(maxWidth: .infinity)
-							.listRowInsets(EdgeInsets())
-					case .failure:
-						Image(systemName: "photo")
-							.resizable()
-							.scaledToFit()
-							.frame(maxWidth: .infinity)
-							.foregroundColor(.gray)
-							.frame(height: 120)
-						
-					@unknown default:
-						EmptyView()
+			NBSection("المطور") {
+				ForEach(_contacts, id: \.url) { contact in
+					Button {
+						UIApplication.open(contact.url)
+					} label: {
+						HStack(spacing: 14) {
+							Image(systemName: contact.icon)
+								.font(.system(size: 26))
+								.frame(width: 34)
+								.foregroundStyle(Color.accentColor)
+							VStack(alignment: .leading, spacing: 2) {
+								Text(contact.title)
+									.foregroundStyle(.primary)
+								Text(contact.handle)
+									.font(.footnote)
+									.foregroundStyle(.secondary)
+							}
+							Spacer()
+							Image(systemName: "arrow.up.right")
+								.foregroundColor(.secondary.opacity(0.65))
+						}
 					}
 				}
-			}
-		}
-	}
-}
-
-// MARK: - Extension: view
-extension AboutView {
-	@ViewBuilder
-	private func _credit(
-		name: String?,
-		desc: String?,
-		github: String
-	) -> some View {
-		Button {
-			UIApplication.open("https://github.com/\(github)")
-		} label: {
-			HStack {
-				FRIconCellView(
-					title: name ?? github,
-					subtitle: desc ?? "",
-					iconUrl: URL(string: "https://github.com/\(github).png")!,
-					size: 45,
-					isCircle: true
-				)
-				
-				Image(systemName: "arrow.up.right")
-					.foregroundColor(.secondary.opacity(0.65))
 			}
 		}
 	}
