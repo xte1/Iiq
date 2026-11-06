@@ -78,7 +78,7 @@ struct FeatherApp: App {
 	static func addDefaultSourceIfNeeded() {
 		let key = "icerf.didAddDefaultSource"
 		guard !UserDefaults.standard.bool(forKey: key) else { return }
-		FR.handleSource("https://raw.githubusercontent.com/AbdTench/SwiftSource/refs/heads/main/My%20Source") {
+		FR.handleSource("https://ikiraplus.pages.dev/IPA-AR.json") {
 			UserDefaults.standard.set(true, forKey: key)
 		}
 	}
