@@ -49,7 +49,7 @@ extension ServerView {
 // MARK: - View
 struct ServerView: View {
 	@AppStorage("Feather.ipFix") private var _ipFix: Bool = false
-	@AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
+	@AppStorage("Feather.serverMethod") private var _serverMethod: Int = 1
 	private let _serverMethods: [String] = [.localized("Fully Local"), .localized("Semi Local")]
 	
 	private let _dataService = NBFetchService()
