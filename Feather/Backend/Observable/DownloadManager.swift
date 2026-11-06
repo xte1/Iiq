@@ -182,6 +182,8 @@ extension DownloadManager: URLSessionDownloadDelegate {
 				generator.notificationOccurred(.error)
 			}
 			
+			AutoInstaller.shared.importFinished(downloadID: dl.id, error: err)
+			
 			DispatchQueue.main.async {
 				if let index = DownloadManager.shared.getDownloadIndex(by: dl.id) {
 					DownloadManager.shared.downloads.remove(at: index)
